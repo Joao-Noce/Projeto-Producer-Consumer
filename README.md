@@ -13,6 +13,7 @@
 - **Consumer**: Aplicação **Node.js (Express)** que consome a fila `messages`, **armazena em MySQL** e expõe um endpoint `GET` para listar as mensagens.  
   - O Consumer **ouve a fila** e processa as mensagens conforme chegam, garantindo que nenhuma seja perdida.  
   - Isso implementa o padrão **Producer-Consumer**, separando produção e consumo de dados para escalabilidade e confiabilidade.
+  - Para visualizar as mensagens enviadas, basta buscar pela URL **http://localhost:3000** em seu navegador
 
 - **docker-compose.yml**: Orquestra RabbitMQ, MySQL e os dois serviços, facilitando o setup completo com **um único comando**.
 
