@@ -1,0 +1,74 @@
+services:
+  # Serviço do RabbitMQ (fila)
+  rabbitmq:
+    image: rabbitmq:3-management   # versão com painel web
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # porta usada pelas apps (Java/Node) pra conectar
+      - "15672:15672" # porta do painel web (http://localhost:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Serviço do MySQL (banco usado pelo consumer)
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: consumerdb
+      MYSQL_USER: consumer
+      MYSQL_PASSWORD: consumerpass
+    ports:
+      - "3307:3306"   # expõe pra host
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Producer (Java Spring Boot)
+  producer:
+    build: ./producer      # caminho para o Dockerfile do producer
+    container_name: producer
+    depends_on:
+      rabbitmq:           # só inicia quando o RabbitMQ estiver pronto
+        condition: service_healthy
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq   # hostname do serviço na rede interna
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    ports:
+      - "8081:8080"        # expõe API na máquina
+
+  # Consumer (Node.js)
+  consumer:
+    build: ./consumer      # caminho do Dockerfile do consumer
+    container_name: consumer
+    depends_on:
+      rabbitmq:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      MYSQL_HOST: mysql
+      MYSQL_USER: consumer
+      MYSQL_PASSWORD: consumerpass
+      MYSQL_DATABASE: consumerdb
+    ports:
+      - "3000:3000"        # expõe API na máquina
+
+volumes:
+  mysql_data:
