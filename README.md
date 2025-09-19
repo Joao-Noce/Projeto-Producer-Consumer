@@ -2,7 +2,7 @@
 
 **👤 Integrante**  
 
-- JOÃO PEDRO MORI NOCE - RA: 00000000
+- JOÃO PEDRO MORI NOCE - RA: 01241076
 
 ## 📦 O que tem aqui
 
